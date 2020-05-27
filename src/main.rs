@@ -1,21 +1,19 @@
-use std::io::{stdout, Write};
-use tui::{backend::CrosstermBackend, Terminal};
-use crossterm::{
-    execute,
-    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
-    ExecutableCommand, Result,
-    event,
-};
+use std::io;
+use tui::Terminal;
+use tui::backend::TermionBackend;
+use termion::raw::IntoRawMode;
+use tui::widgets::{Widget, Block, Borders};
+use tui::layout::{Layout, Constraint, Direction};
 
-fn main() {
-//    let stdout = io::stdout();
-//    let backend = CrosstermBackend::new(stdout);
-//    let mut terminal = Terminal::new(backend);
-    execute!(
-        stdout(),
-        SetForegroundColor(Color::Blue),
-        SetBackgroundColor(Color::Red),
-        Print("Styled text here."),
-        ResetColor
-    );
+fn main() -> Result<(), io::Error> {
+    let stdout = io::stdout().into_raw_mode()?;
+    let backend = TermionBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+    terminal.draw(|mut f| {
+        let size = f.size();
+        let block = Block::default()
+            .title("Block")
+            .borders(Borders::ALL);
+        f.render_widget(block, size);
+    })
 }
