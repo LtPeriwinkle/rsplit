@@ -1,9 +1,9 @@
 #![allow(array_into_iter)]
 use std::{env, fs, io, process};
 use tui::{backend::TermionBackend, Terminal};
-use termion::{raw::IntoRawMode, terminal_size, clear::All, cursor::Goto};
-use tui::widgets::{Widget, Table, Borders, Block, Row};
-use tui::layout::{Layout, Constraint, Direction, Rect};
+use termion::{raw::IntoRawMode, clear::All, cursor::Goto};
+use tui::widgets::{Table, Borders, Block, Row, List, Text};
+use tui::layout::{Rect};
 use tui::style::{Style, Color};
 
 fn check_args(args: Vec<String>) -> Result<String, &'static str> {
@@ -16,15 +16,16 @@ fn check_args(args: Vec<String>) -> Result<String, &'static str> {
 
 fn main() -> Result<(), io::Error> {
     let args: Vec<String> = env::args().collect();
-    print!("{}{}", All, Goto(1, 1));
     let file = check_args(args).unwrap_or_else(|err| {
-        println!("{}", err);
+        eprintln!("{}", err);
         process::exit(1);
     });
     let stdout = io::stdout().into_raw_mode()?;
     let backend = TermionBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    terminal.draw(|mut f| {
+    let standard = Color::White;
+    print!("{}{}", All, Goto(1, 1));
+    /*terminal.draw(|mut f| {
         let area = Rect::new(0, 0, 50, 25);
         let test = Table::new(
             ["Split", "Delta", "Time"].iter(),
@@ -41,5 +42,13 @@ fn main() -> Result<(), io::Error> {
         .style(Style::default().fg(Color::White))
         .column_spacing(5);
         f.render_widget(test, area)
+    })*/
+    terminal.draw(|mut s| {
+        let area = Rect::new(0, 0, 20, 18);
+        let splits = ["asdf", "qwerty", "ghjkl"].iter().map(|i| Text::raw(*i));
+        let names = List::new(splits)
+            .block(Block::default().title("Split Name").borders(Borders::RIGHT | Borders::TOP))
+            .style(Style::default().fg(standard));
+        s.render_widget(names, area)
     })
 }
