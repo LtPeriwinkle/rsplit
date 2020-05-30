@@ -10,5 +10,5 @@ I'm fairly new to rust and doing this as basically a learning exercise so feel f
 3. keyboard inputs
 4. parse split files (possibly json)
 5. colors for good/bad times
-6. multithreading 
+6. multithreading (i.e. a timer and a render thread)
 7. tool for creating splits
