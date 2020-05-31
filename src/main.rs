@@ -2,8 +2,8 @@ use std::{env, fs, io, process, iter::FromIterator};
 use tui::{backend::TermionBackend, terminal::Terminal};
 use termion::{clear::All, cursor::Goto};
 use termion::raw::{IntoRawMode, RawTerminal};
-use tui::widgets::{Table, Borders, Block, Row};
-use tui::layout::{Rect, Constraint};
+use tui::widgets::{Table, Borders, Block, Row, Paragraph, Text};
+use tui::layout::{Rect, Constraint, Alignment};
 use tui::style::{Style, Color, Modifier};
 use serde::{Serialize, Deserialize};
 use serde_json;
@@ -34,7 +34,7 @@ fn check_args(args: Vec<String>) -> Result<String, &'static str> {
 fn draw_timer(mut terminal: Output, rows: Vec<tui::widgets::Row<core::slice::Iter<&str>>>) -> Result<(), io::Error> {
     terminal.draw(|mut t| {
         let area = Rect::new(0, 0, 35, 18);
-        let timer = Table::new(
+        let time_table = Table::new(
             ["Split", "Time"].iter(),
             rows.into_iter()
         )
@@ -43,7 +43,12 @@ fn draw_timer(mut terminal: Output, rows: Vec<tui::widgets::Row<core::slice::Ite
         .widths(&[Constraint::Length(20), Constraint::Length(11)])
         .style(Style::default().fg(STANDARD))
         .column_spacing(2);
-        t.render_widget(timer, area)
+        t.render_widget(time_table, area);
+        let time_area = Rect::new(0, 19, 35, 2);
+        let text = [Text::raw("words")];
+        let time = Paragraph::new(text.iter())
+            .alignment(Alignment::Right);
+        t.render_widget(time, time_area)
     })
 }
 
@@ -75,7 +80,8 @@ fn main() -> Result<(), io::Error> {
         Row::StyledData(["12345678901234567890", "Time3"].iter(), Style::default().fg(GOOD)),
         Row::StyledData(["12345678901234567890", "Time4"].iter(), Style::default().fg(BAD))];
     let table_rows = splits_to_print(&stuff, current_line);
-    draw_timer(terminal, table_rows);
-    println!("{:?}", splits_from_json[1]);
-    Ok(())
+    /*loop {
+        draw_timer(terminal, table_rows)
+    }*/
+    draw_timer(terminal, table_rows)
 }
