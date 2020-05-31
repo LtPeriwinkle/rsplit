@@ -5,7 +5,14 @@ use termion::raw::{IntoRawMode, RawTerminal};
 use tui::widgets::{Table, Borders, Block, Row};
 use tui::layout::{Rect, Constraint};
 use tui::style::{Style, Color, Modifier};
+use serde::{Serialize, Deserialize};
+use serde_json;
 
+#[derive(Serialize, Deserialize, Debug)]
+struct Split {
+    name: String,
+    time: u32,
+}
 //i really really did not want to end up typing this multiple times
 type Output = Terminal<TermionBackend<RawTerminal<io::Stdout>>>;
 
@@ -40,7 +47,7 @@ fn draw_timer(mut terminal: Output, rows: Vec<tui::widgets::Row<core::slice::Ite
     })
 }
 
-fn choose_vec_print<'a>(split_vec: &'a Vec<tui::widgets::Row<core::slice::Iter<'a, &str>>>, line: usize) -> std::vec::Vec<tui::widgets::Row<std::slice::Iter<'a, &'a str>>> {
+fn splits_to_print<'a>(split_vec: &'a Vec<tui::widgets::Row<core::slice::Iter<'a, &str>>>, line: usize) -> std::vec::Vec<tui::widgets::Row<std::slice::Iter<'a, &'a str>>> {
     let end = line + 2;
     //i have no idea why line works but it does. thank you rust forum user nemo157.
     let print_vec = Vec::from_iter(split_vec[line..end].iter().cloned());
@@ -58,6 +65,7 @@ fn main() -> Result<(), io::Error> {
         eprintln!("{}", err);
         process::exit(1);
     });
+    let splits_from_json: Vec<Split> = serde_json::from_str(&splits_json)?;
     print!("{}{}", All, Goto(1, 1));
     let stdout = io::stdout().into_raw_mode()?;
     let backend = TermionBackend::new(stdout);
@@ -66,6 +74,8 @@ fn main() -> Result<(), io::Error> {
         Row::StyledData(["12345678901234567890", "Time2"].iter(), Style::default().fg(BAD)),
         Row::StyledData(["12345678901234567890", "Time3"].iter(), Style::default().fg(GOOD)),
         Row::StyledData(["12345678901234567890", "Time4"].iter(), Style::default().fg(BAD))];
-    let table_rows = choose_vec_print(&stuff, current_line);
-    draw_timer(terminal, table_rows)
+    let table_rows = splits_to_print(&stuff, current_line);
+    draw_timer(terminal, table_rows);
+    println!("{:?}", splits_from_json[1]);
+    Ok(())
 }
