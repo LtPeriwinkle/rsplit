@@ -1,4 +1,4 @@
-use std::{env, fs, io, process, iter::FromIterator};
+use std::{env, fs, io, process, iter::FromIterator, thread::sleep, time::Duration};
 use tui::{backend::TermionBackend, terminal::Terminal};
 use termion::{clear::All, cursor::Goto};
 use termion::raw::{IntoRawMode, RawTerminal};
@@ -14,12 +14,13 @@ struct Split {
     time: u32,
 }
 //i really really did not want to end up typing this multiple times
-type Output = Terminal<TermionBackend<RawTerminal<io::Stdout>>>;
+type Output<'a> = &'a mut Terminal<TermionBackend<RawTerminal<io::Stdout>>>;
 
-//these are the colors that the timer will use for ahead/behind/normal or something
-static GOOD: Color = Color::Green;
+//these are the colors that the timer will use for ahead/behind/normal or something i guess
+static GOOD: Color = Color::LightGreen;
 static STANDARD: Color = Color::White;
-static BAD: Color = Color::Red;
+static BAD: Color = Color::LightRed;
+static GOLD: Color = Color::LightYellow;
 
 //makes sure that a file was actually provided
 fn check_args(args: Vec<String>) -> Result<String, &'static str> {
@@ -31,7 +32,7 @@ fn check_args(args: Vec<String>) -> Result<String, &'static str> {
 }
 
 //draws the timer window to the terminal
-fn draw_timer(mut terminal: Output, rows: Vec<tui::widgets::Row<core::slice::Iter<&str>>>) -> Result<(), io::Error> {
+fn draw_timer(terminal: Output, rows: Vec<tui::widgets::Row<core::slice::Iter<&str>>>) -> Result<(), io::Error> {
     terminal.draw(|mut t| {
         let area = Rect::new(0, 0, 35, 18);
         let time_table = Table::new(
@@ -53,15 +54,17 @@ fn draw_timer(mut terminal: Output, rows: Vec<tui::widgets::Row<core::slice::Ite
 }
 
 fn splits_to_print<'a>(split_vec: &'a Vec<tui::widgets::Row<core::slice::Iter<'a, &str>>>, line: usize) -> std::vec::Vec<tui::widgets::Row<std::slice::Iter<'a, &'a str>>> {
-    let end = line + 2;
+    let end = line + 3;
     //i have no idea why line works but it does. thank you rust forum user nemo157.
     let print_vec = Vec::from_iter(split_vec[line..end].iter().cloned());
     print_vec
 }
 
+
 fn main() -> Result<(), io::Error> {
     let args: Vec<String> = env::args().collect();
-    let current_line = 2;
+    let second = Duration::new(1, 0);
+    let mut current_line = 0;
     let file = check_args(args).unwrap_or_else(|err| {
         eprintln!("{}", err);
         process::exit(1);
@@ -74,14 +77,27 @@ fn main() -> Result<(), io::Error> {
     print!("{}{}", All, Goto(1, 1));
     let stdout = io::stdout().into_raw_mode()?;
     let backend = TermionBackend::new(stdout);
-    let terminal = Terminal::new(backend)?;
+    let mut terminal = Terminal::new(backend)?;
     let stuff = vec![Row::StyledData(["12345678901234567890", "Time1"].iter(), Style::default().fg(GOOD)),
         Row::StyledData(["12345678901234567890", "Time2"].iter(), Style::default().fg(BAD)),
         Row::StyledData(["12345678901234567890", "Time3"].iter(), Style::default().fg(GOOD)),
-        Row::StyledData(["12345678901234567890", "Time4"].iter(), Style::default().fg(BAD))];
-    let table_rows = splits_to_print(&stuff, current_line);
-    /*loop {
-        draw_timer(terminal, table_rows)
-    }*/
-    draw_timer(terminal, table_rows)
+        Row::StyledData(["12345678901234567890", "Time4"].iter(), Style::default().fg(GOLD)),
+        Row::StyledData(["12345678901234567890", "Time5"].iter(), Style::default().fg(BAD)),
+        Row::StyledData(["12345678901234567890", "Time6"].iter(), Style::default().fg(GOOD)),
+        Row::StyledData(["12345678901234567890", "Time7"].iter(), Style::default().fg(GOLD))];
+    loop {
+        //new scope here so that i can recreate table_rows for each loop
+        {
+            let table_rows = splits_to_print(&stuff, current_line);
+            sleep(second);
+            current_line += 1;
+            draw_timer(&mut terminal, table_rows);
+        }
+        if current_line == 5 {
+            break;
+        }
+    }
+    print!("{}", Goto(1, 21));
+    Ok(())
+    //draw_timer(terminal, table_rows)
 }
