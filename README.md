@@ -6,10 +6,9 @@ If someone out there finds real documentation on how to use tui with crossterm (
 I'm fairly new to rust and doing this as basically a learning exercise so feel free to tell me all the things I'm doing wrong.\
 
 ## a rough roadmap for this project:
-1. figure out how to update terminal how i want
-2. get a timer working
-3. keyboard inputs
-4. parse split files (possibly json)
-5. colors for good/bad times
-6. multithreading (i.e. a timer and a render thread)
-7. tool for creating splits
+1. figure out how to update terminal how i want (**done**)
+2. parse json split files (*in progress*)
+3. get timer working
+4. keyboard inputs
+5. multithreading (i.e. a timer and a render thread)
+6. tool for creating splits
