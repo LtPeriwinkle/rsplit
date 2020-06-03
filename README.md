@@ -10,5 +10,6 @@ I'm fairly new to rust and doing this as basically a learning exercise so feel f
 2. parse json split files (*in progress*)
 3. get timer working
 4. keyboard inputs
-5. multithreading (i.e. a timer and a render thread)
-6. tool for creating splits
+5. dynamic colors for ahead/behind/gold
+6. multithreading (i.e. a timer and a render thread)
+7. tool for creating splits
