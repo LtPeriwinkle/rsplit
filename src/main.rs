@@ -8,21 +8,22 @@ use tui::style::{Style, Color, Modifier};
 use serde::{Serialize, Deserialize};
 use serde_json;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 struct Split {
     name: String,
     time: u32,
 }
+
 //i really really did not want to end up typing this multiple times
 type Output<'a> = &'a mut Terminal<TermionBackend<RawTerminal<io::Stdout>>>;
 
-//these are the colors that the timer will use for ahead/behind/normal or something i guess
+//these are the colors that the timer will use for ahead/behind/gold/other stuff
 static GOOD: Color = Color::LightGreen;
 static STANDARD: Color = Color::White;
 static BAD: Color = Color::LightRed;
 static GOLD: Color = Color::LightYellow;
 
-//makes sure that a file was actually provided
+//makes sure that an argument was actually provided
 fn check_args(args: Vec<String>) -> Result<String, &'static str> {
     if args.len() < 2 {
         return Err("please specify a splits file");
@@ -31,7 +32,7 @@ fn check_args(args: Vec<String>) -> Result<String, &'static str> {
     Ok(splits.to_string())
 }
 
-//draws the timer window to the terminal
+//draws the timer window to the terminal, including area with splits, title, and soon-to-be current time
 fn draw_timer(terminal: Output, rows: Vec<tui::widgets::Row<core::slice::Iter<&str>>>) -> Result<(), io::Error> {
     terminal.draw(|mut t| {
         let area = Rect::new(0, 0, 35, 18);
@@ -60,7 +61,6 @@ fn splits_to_print<'a>(split_vec: &'a Vec<tui::widgets::Row<core::slice::Iter<'a
     print_vec
 }
 
-
 fn main() -> Result<(), io::Error> {
     let args: Vec<String> = env::args().collect();
     let second = Duration::new(1, 0);
@@ -73,20 +73,20 @@ fn main() -> Result<(), io::Error> {
         eprintln!("{}", err);
         process::exit(1);
     });
-    let splits_from_json: Vec<Split> = serde_json::from_str(&splits_json)?;
+    let spl: Vec<Split> = serde_json::from_str(&splits_json)?;
     print!("{}{}", All, Goto(1, 1));
     let stdout = io::stdout().into_raw_mode()?;
     let backend = TermionBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    let stuff = vec![Row::StyledData(["12345678901234567890", "Time1"].iter(), Style::default().fg(GOOD)),
-        Row::StyledData(["12345678901234567890", "Time2"].iter(), Style::default().fg(BAD)),
-        Row::StyledData(["12345678901234567890", "Time3"].iter(), Style::default().fg(GOOD)),
-        Row::StyledData(["12345678901234567890", "Time4"].iter(), Style::default().fg(GOLD)),
-        Row::StyledData(["12345678901234567890", "Time5"].iter(), Style::default().fg(BAD)),
-        Row::StyledData(["12345678901234567890", "Time6"].iter(), Style::default().fg(GOOD)),
-        Row::StyledData(["12345678901234567890", "Time7"].iter(), Style::default().fg(GOLD))];
+    let array = [&spl[0].name, "time1"];
+    let stuff = vec![Row::StyledData(array.iter(), Style::default().fg(GOOD)),
+        Row::StyledData(["2", "Time2"].iter(), Style::default().fg(BAD)),
+        Row::StyledData(["3", "Time3"].iter(), Style::default().fg(GOOD)),
+        Row::StyledData(["4", "Time4"].iter(), Style::default().fg(GOLD)),
+        Row::StyledData(["5", "Time5"].iter(), Style::default().fg(BAD)),
+        Row::StyledData(["6", "Time6"].iter(), Style::default().fg(GOOD)),
+        Row::StyledData(["7", "Time7"].iter(), Style::default().fg(GOLD))];
     loop {
-        //new scope here so that i can recreate table_rows for each loop
         {
             let table_rows = splits_to_print(&stuff, current_line);
             sleep(second);
@@ -99,5 +99,4 @@ fn main() -> Result<(), io::Error> {
     }
     print!("{}", Goto(1, 21));
     Ok(())
-    //draw_timer(terminal, table_rows)
 }
