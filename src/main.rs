@@ -26,14 +26,14 @@ static GOLD: Color = Color::LightYellow;
 //makes sure that an argument was actually provided
 fn check_args(args: Vec<String>) -> Result<String, &'static str> {
     if args.len() < 2 {
-        return Err("please specify a splits file");
+        return Err("please specify a file to read splits from");
     }
     let splits = &args[1];
     Ok(splits.to_string())
 }
 
 //draws the timer window to the terminal, including area with splits, title, and soon-to-be current time
-fn draw_timer(terminal: Output, rows: Vec<tui::widgets::Row<core::slice::Iter<&str>>>) -> Result<(), io::Error> {
+fn draw_timer(terminal: Output, rows: Vec<tui::widgets::Row<core::slice::Iter<String>>>) -> Result<(), io::Error> {
     terminal.draw(|mut t| {
         let area = Rect::new(0, 0, 35, 18);
         let time_table = Table::new(
@@ -54,8 +54,8 @@ fn draw_timer(terminal: Output, rows: Vec<tui::widgets::Row<core::slice::Iter<&s
     })
 }
 
-fn splits_to_print<'a>(split_vec: &'a Vec<tui::widgets::Row<core::slice::Iter<'a, &str>>>, line: usize) -> std::vec::Vec<tui::widgets::Row<std::slice::Iter<'a, &'a str>>> {
-    let end = line + 3;
+fn splits_to_print<'a>(split_vec: &'a Vec<Row<core::slice::Iter<'a, String>>>, line: usize) -> Vec<Row<std::slice::Iter<'a, String>>> {
+    let end = line + 1;
     //i have no idea why line works but it does. thank you rust forum user nemo157.
     let print_vec = Vec::from_iter(split_vec[line..end].iter().cloned());
     print_vec
@@ -69,31 +69,25 @@ fn main() -> Result<(), io::Error> {
         eprintln!("{}", err);
         process::exit(1);
     });
-    let splits_json = fs::read_to_string(file).unwrap_or_else(|err| {
+    let json_raw = fs::read_to_string(file).unwrap_or_else(|err| {
         eprintln!("{}", err);
         process::exit(1);
     });
-    let spl: Vec<Split> = serde_json::from_str(&splits_json)?;
+    let json_as_splits: Vec<Split> = serde_json::from_str(&json_raw)?;
     print!("{}{}", All, Goto(1, 1));
     let stdout = io::stdout().into_raw_mode()?;
     let backend = TermionBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    let array = [&spl[0].name, "time1"];
-    let stuff = vec![Row::StyledData(array.iter(), Style::default().fg(GOOD)),
-        Row::StyledData(["2", "Time2"].iter(), Style::default().fg(BAD)),
-        Row::StyledData(["3", "Time3"].iter(), Style::default().fg(GOOD)),
-        Row::StyledData(["4", "Time4"].iter(), Style::default().fg(GOLD)),
-        Row::StyledData(["5", "Time5"].iter(), Style::default().fg(BAD)),
-        Row::StyledData(["6", "Time6"].iter(), Style::default().fg(GOOD)),
-        Row::StyledData(["7", "Time7"].iter(), Style::default().fg(GOLD))];
+    let num_of_splits = json_as_splits.len();
+
     loop {
         {
-            let table_rows = splits_to_print(&stuff, current_line);
+            let table_rows = splits_to_print(&rows, current_line);
             sleep(second);
             current_line += 1;
-            draw_timer(&mut terminal, table_rows);
+            draw_timer(&mut terminal, table_rows)?;
         }
-        if current_line == 5 {
+        if current_line == 2 {
             break;
         }
     }
