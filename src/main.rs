@@ -39,9 +39,9 @@ fn queue_table_row(row: u16, to_print: &String) -> cross_result<()> {
 }
 
 //new soon-to-be print a timer function
-fn print_to_terminal(stdout: &mut std::io::Stdout, to_print: Vec<String>) -> cross_result<()> {
+fn print_to_terminal(stdout: &mut std::io::Stdout, to_print: Vec<String>, index: usize) -> cross_result<()> {
     stdout.queue(Clear(All))?;
-    queue_table_row(1, &to_print[0])?;
+    queue_table_row(1, &to_print[index])?;
     stdout.flush()?;
     Ok(())
 }
@@ -81,7 +81,7 @@ fn main() -> Result<(), Error> {
             let table_rows = splits_to_print(&rows, current_line);
             sleep(second);
             current_line += 1;
-            print_to_terminal(&mut out, table_rows).unwrap();
+            print_to_terminal(&mut out, table_rows, current_line).unwrap();
         }
         if current_line == 1 {
             break;
