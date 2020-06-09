@@ -29,23 +29,6 @@ fn check_args(args: Vec<String>) -> Result<String, &'static str> {
     Ok(splits.to_string())
 }
 
-fn queue_table_row(row: u16, to_print: &String) -> cross_result<()> {
-    let mut stdout = stdout();
-    stdout.queue(MoveTo(1, row))?
-        .queue(SetForegroundColor(GOOD))?
-        .queue(Print(to_print))?
-        .queue(MoveTo(20, row))?;
-    Ok(())
-}
-
-//new soon-to-be print a timer function
-fn print_to_terminal(stdout: &mut std::io::Stdout, to_print: Vec<String>, index: usize) -> cross_result<()> {
-    stdout.queue(Clear(All))?;
-    queue_table_row(1, &to_print[index])?;
-    stdout.flush()?;
-    Ok(())
-}
-
 fn splits_to_print<'a>(split_vec: &'a Vec<String>, line: usize) -> Vec<String> {
     let end = line + 1;
     //i have no idea why line works but it does. thank you rust forum user nemo157.
@@ -53,9 +36,35 @@ fn splits_to_print<'a>(split_vec: &'a Vec<String>, line: usize) -> Vec<String> {
     print_vec
 }
 
+//new soon-to-be print a timer function
+fn print_to_terminal(to_print: Vec<String>, index: usize) -> cross_result<()> {
+    let mut counter: u16 = 1;
+    loop {
+        if counter == to_print.len() as u16 {
+            break;
+        }
+        queue_table_row(counter, &to_print[index])?;
+        println!("{}", counter);
+        counter += 1;
+    }
+
+    Ok(())
+}
+
+fn queue_table_row(row: u16, to_print: &String) -> cross_result<()> {
+    let mut stdout = stdout();
+    stdout.queue(MoveTo(1, row))?
+        .queue(SetForegroundColor(GOOD))?
+        .queue(Print(to_print))?
+        .queue(MoveTo(20, row))?;
+    stdout.flush()?;
+    Ok(())
+}
+
 fn main() -> Result<(), Error> {
     let args: Vec<String> = env::args().collect();
     let mut out = stdout();
+    out.queue(Clear(All)).unwrap();
     let second = Duration::new(1, 0);
     let mut current_line = 0;
     let file = check_args(args).unwrap_or_else(|err| {
@@ -67,10 +76,6 @@ fn main() -> Result<(), Error> {
         process::exit(2);
     });
     let json_as_splits: Vec<Split> = serde_json::from_str(&json_raw)?;
-    /*(print_to_terminal(out).unwrap_or_else(|err| {
-        eprintln!("{}", err);
-        process::exit(3);
-    });*/
     let mut rows = Vec::new();
     for i in json_as_splits {
         let split = i.name;
@@ -81,7 +86,7 @@ fn main() -> Result<(), Error> {
             let table_rows = splits_to_print(&rows, current_line);
             sleep(second);
             current_line += 1;
-            print_to_terminal(&mut out, table_rows, current_line).unwrap();
+            print_to_terminal(table_rows, current_line).unwrap();
         }
         if current_line == 1 {
             break;
