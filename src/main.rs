@@ -1,7 +1,7 @@
 use std::{env, fs, process, iter::FromIterator, thread::sleep, time::Duration};
 use std::io::{Write, stdout, Error};
 use crossterm::Result as cross_result;
-use crossterm::{QueueableCommand, execute, cursor::MoveTo};
+use crossterm::{QueueableCommand, ExecutableCommand, cursor::MoveTo};
 use crossterm::style::{Print, Color, SetForegroundColor};
 use crossterm::terminal::{Clear, ClearType::All};
 use serde::{Serialize, Deserialize};
@@ -15,9 +15,9 @@ struct Split {
 
 //these are the colors that the timer will use for ahead/behind/gold/other stuff
 static GOOD: Color = Color::Green;
-static STANDARD: Color = Color::White;
+/*static STANDARD: Color = Color::White;
 static BAD: Color = Color::Red;
-static GOLD: Color = Color::Yellow;
+static GOLD: Color = Color::Yellow;*/
 static RESET: Color = Color::Reset;
 
 //makes sure that an argument was actually provided
@@ -30,34 +30,32 @@ fn check_args(args: Vec<String>) -> Result<String, &'static str> {
 }
 
 fn splits_to_print<'a>(split_vec: &'a Vec<String>, line: usize) -> Vec<String> {
-    let end = line + 1;
+    let end = line + 2;
     //i have no idea why line works but it does. thank you rust forum user nemo157.
     let print_vec = Vec::from_iter(split_vec[line..end].iter().cloned());
     print_vec
 }
 
 //new soon-to-be print a timer function
-fn print_to_terminal(to_print: Vec<String>, index: usize) -> cross_result<()> {
+fn print_split_names(to_print: Vec<String>, index: usize, out: &mut std::io::Stdout) -> cross_result<()> {
     let mut counter: u16 = 1;
     loop {
         if counter == to_print.len() as u16 {
             break;
         }
-        queue_table_row(counter, &to_print[index])?;
-        println!("{}", counter);
+        queue_table_row(&to_print[index], "time", out, counter)?;
         counter += 1;
     }
-
     Ok(())
 }
 
-fn queue_table_row(row: u16, to_print: &String) -> cross_result<()> {
-    let mut stdout = stdout();
-    stdout.queue(MoveTo(1, row))?
+fn queue_table_row(split_name: &str, time: &str, out: &mut std::io::Stdout, row: u16) -> cross_result<()> {
+    out.queue(MoveTo(1, 1))?
         .queue(SetForegroundColor(GOOD))?
-        .queue(Print(to_print))?
+        .queue(Print(split_name))?
+        .queue(Print(time))?
         .queue(MoveTo(20, row))?;
-    stdout.flush()?;
+    out.flush()?;
     Ok(())
 }
 
@@ -85,13 +83,14 @@ fn main() -> Result<(), Error> {
         {
             let table_rows = splits_to_print(&rows, current_line);
             sleep(second);
+            print_split_names(table_rows, current_line, &mut out).unwrap();
             current_line += 1;
-            print_to_terminal(table_rows, current_line).unwrap();
         }
-        if current_line == 1 {
+        if current_line == 2 {
             break;
         }
     }
-    execute!(stdout(), SetForegroundColor(RESET)).unwrap();
+    //print_split_names(rows, current_line).unwrap();
+    out.execute(SetForegroundColor(RESET)).unwrap();
     Ok(())
 }
