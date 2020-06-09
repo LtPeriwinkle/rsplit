@@ -1,7 +1,7 @@
 use std::{env, fs, process, iter::FromIterator, thread::sleep, time::Duration};
 use std::io::{Write, stdout, Error};
 use crossterm::Result as cross_result;
-use crossterm::{QueueableCommand, execute};
+use crossterm::{QueueableCommand, execute, cursor::MoveTo};
 use crossterm::style::{Print, Color, SetForegroundColor};
 use crossterm::terminal::{Clear, ClearType::All};
 use serde::{Serialize, Deserialize};
@@ -29,10 +29,19 @@ fn check_args(args: Vec<String>) -> Result<String, &'static str> {
     Ok(splits.to_string())
 }
 
-fn print_to_terminal(mut stdout: std::io::Stdout) -> cross_result<()> {
-    stdout.queue(Clear(All))?
+fn queue_table_row(row: u16, to_print: &String) -> cross_result<()> {
+    let mut stdout = stdout();
+    stdout.queue(MoveTo(1, row))?
         .queue(SetForegroundColor(GOOD))?
-        .queue(Print("something is being printed"))?;
+        .queue(Print(to_print))?
+        .queue(MoveTo(20, row))?;
+    Ok(())
+}
+
+//new soon-to-be print a timer function
+fn print_to_terminal(stdout: &mut std::io::Stdout, to_print: Vec<String>) -> cross_result<()> {
+    stdout.queue(Clear(All))?;
+    queue_table_row(1, &to_print[0])?;
     stdout.flush()?;
     Ok(())
 }
@@ -46,7 +55,7 @@ fn splits_to_print<'a>(split_vec: &'a Vec<String>, line: usize) -> Vec<String> {
 
 fn main() -> Result<(), Error> {
     let args: Vec<String> = env::args().collect();
-    let out = stdout();
+    let mut out = stdout();
     let second = Duration::new(1, 0);
     let mut current_line = 0;
     let file = check_args(args).unwrap_or_else(|err| {
@@ -58,10 +67,10 @@ fn main() -> Result<(), Error> {
         process::exit(2);
     });
     let json_as_splits: Vec<Split> = serde_json::from_str(&json_raw)?;
-    print_to_terminal(out).unwrap_or_else(|err| {
+    /*(print_to_terminal(out).unwrap_or_else(|err| {
         eprintln!("{}", err);
         process::exit(3);
-    });
+    });*/
     let mut rows = Vec::new();
     for i in json_as_splits {
         let split = i.name;
@@ -72,13 +81,12 @@ fn main() -> Result<(), Error> {
             let table_rows = splits_to_print(&rows, current_line);
             sleep(second);
             current_line += 1;
-            //draw_timer(&mut terminal, table_rows)?;
+            print_to_terminal(&mut out, table_rows).unwrap();
         }
-        if current_line == 2 {
+        if current_line == 1 {
             break;
         }
     }
-    //print!("{}", Goto(1, 21));
-    execute!(stdout(), SetForegroundColor(RESET));
+    execute!(stdout(), SetForegroundColor(RESET)).unwrap();
     Ok(())
 }
