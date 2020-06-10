@@ -30,7 +30,7 @@ fn check_args(args: Vec<String>) -> Result<String, &'static str> {
 }
 
 fn splits_to_print<'a>(split_vec: &'a Vec<String>, line: usize) -> Vec<String> {
-    let end = line + 2;
+    let end = if split_vec.len() > 18 {18} else {split_vec.len()};
     //i have no idea why line works but it does. thank you rust forum user nemo157.
     let print_vec = Vec::from_iter(split_vec[line..end].iter().cloned());
     print_vec
@@ -38,7 +38,7 @@ fn splits_to_print<'a>(split_vec: &'a Vec<String>, line: usize) -> Vec<String> {
 
 //new soon-to-be print a timer function
 fn print_split_names(to_print: Vec<String>, index: usize, out: &mut std::io::Stdout) -> cross_result<()> {
-    let mut counter: u16 = 1;
+    let mut counter: u16 = 0;
     loop {
         if counter == to_print.len() as u16 {
             break;
@@ -50,19 +50,18 @@ fn print_split_names(to_print: Vec<String>, index: usize, out: &mut std::io::Std
 }
 
 fn queue_table_row(split_name: &str, time: &str, out: &mut std::io::Stdout, row: u16) -> cross_result<()> {
-    out.queue(MoveTo(1, 1))?
+    out.queue(MoveTo(1, row))?
         .queue(SetForegroundColor(GOOD))?
         .queue(Print(split_name))?
-        .queue(Print(time))?
-        .queue(MoveTo(20, row))?;
-    out.flush()?;
+        .queue(MoveTo(20, row))?
+        .queue(Print(time))?;
     Ok(())
 }
 
 fn main() -> Result<(), Error> {
     let args: Vec<String> = env::args().collect();
     let mut out = stdout();
-    out.queue(Clear(All)).unwrap();
+    out.execute(Clear(All)).unwrap();
     let second = Duration::new(1, 0);
     let mut current_line = 0;
     let file = check_args(args).unwrap_or_else(|err| {
@@ -79,18 +78,19 @@ fn main() -> Result<(), Error> {
         let split = i.name;
         rows.push(split);
     }
-    loop {
+    'main: loop {
+        //introduce a new scope to print new rows each iteration
         {
             let table_rows = splits_to_print(&rows, current_line);
             sleep(second);
+            if current_line == table_rows.len() {
+                break 'main;
+            }
             print_split_names(table_rows, current_line, &mut out).unwrap();
             current_line += 1;
-        }
-        if current_line == 2 {
-            break;
+            out.flush()?;
         }
     }
-    //print_split_names(rows, current_line).unwrap();
     out.execute(SetForegroundColor(RESET)).unwrap();
     Ok(())
 }
