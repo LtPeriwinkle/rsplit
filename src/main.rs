@@ -2,23 +2,12 @@ use std::{env, fs, process, iter::FromIterator, thread::sleep, time::Duration};
 use std::io::{Write, stdout, Error};
 use crossterm::Result as cross_result;
 use crossterm::{QueueableCommand, ExecutableCommand, cursor::MoveTo};
-use crossterm::style::{Print, Color, SetForegroundColor};
+use crossterm::style::{Print, SetForegroundColor};
 use crossterm::terminal::{Clear, ClearType::All};
-use serde::{Serialize, Deserialize};
 use serde_json;
-
-#[derive(Serialize, Deserialize)]
-struct Split {
-    name: String,
-    time: u32,
-}
-
-//these are the colors that the timer will use for ahead/behind/gold/other stuff
-static GOOD: Color = Color::Green;
-/*static STANDARD: Color = Color::White;
-static BAD: Color = Color::Red;
-static GOLD: Color = Color::Yellow;*/
-static RESET: Color = Color::Reset;
+//file with structs, static vars
+mod components;
+use components::*;
 
 //makes sure that an argument was actually provided
 fn check_args(args: Vec<String>) -> Result<String, &'static str> {
@@ -29,7 +18,7 @@ fn check_args(args: Vec<String>) -> Result<String, &'static str> {
     Ok(splits.to_string())
 }
 
-fn splits_to_print<'a>(split_vec: &'a Vec<String>, line: usize) -> Vec<String> {
+fn splits_to_print<'a>(split_vec: &'a Vec<&str>, line: usize) -> Vec<&'a str> {
     let end = if split_vec.len() > 18 {18} else {split_vec.len()};
     //i have no idea why line works but it does. thank you rust forum user nemo157.
     let print_vec = Vec::from_iter(split_vec[line..end].iter().cloned());
@@ -37,7 +26,7 @@ fn splits_to_print<'a>(split_vec: &'a Vec<String>, line: usize) -> Vec<String> {
 }
 
 //new soon-to-be print a timer function
-fn print_split_names(to_print: Vec<String>, index: usize, out: &mut std::io::Stdout) -> cross_result<()> {
+fn print_split_names(to_print: Vec<&str>, index: usize, out: &mut std::io::Stdout) -> cross_result<()> {
     let mut counter: u16 = 0;
     loop {
         if counter == to_print.len() as u16 {
