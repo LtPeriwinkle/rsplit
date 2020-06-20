@@ -19,10 +19,16 @@ fn check_args(args: Vec<String>) -> Result<String, &'static str> {
 }
 
 fn splits_to_print<'a>(split_vec: &'a Vec<&str>, line: usize) -> Vec<&'a str> {
-    let end = if split_vec.len() > 18 {18} else {split_vec.len()};
-    //i have no idea why line works but it does. thank you rust forum user nemo157.
-    let print_vec = Vec::from_iter(split_vec[line..end].iter().cloned());
-    print_vec
+    //makes sure that out-of-bounds doesnt happen
+    if split_vec.len() < 18 {
+        return split_vec.to_vec();
+    } else {
+        let end = if split_vec.len() < line + 18 {split_vec.len() - 1} else {line + 18};
+        //i have no idea why line works but it does. thank you rust forum user nemo157.
+        let print_vec = Vec::from_iter(split_vec[line..end].iter().cloned());
+        print_vec
+    }
+
 }
 
 //new soon-to-be print a timer function
