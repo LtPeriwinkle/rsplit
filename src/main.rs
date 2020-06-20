@@ -1,4 +1,4 @@
-use std::{env, fs, process, iter::FromIterator, thread::sleep, time::Duration};
+use std::{env, fs, process, iter::FromIterator};
 use std::io::{Write, stdout, Error};
 use crossterm::Result as cross_result;
 use crossterm::{QueueableCommand, ExecutableCommand, cursor::MoveTo};
@@ -31,7 +31,7 @@ fn splits_to_print<'a>(split_vec: &'a Vec<&str>, line: usize) -> Vec<&'a str> {
 
 }
 
-//new soon-to-be print a timer function
+/* why did i write this it is completely useless lol
 fn print_split_names(to_print: Vec<&str>, index: usize, out: &mut std::io::Stdout) -> cross_result<()> {
     let mut counter: u16 = 0;
     loop {
@@ -43,7 +43,7 @@ fn print_split_names(to_print: Vec<&str>, index: usize, out: &mut std::io::Stdou
     }
     Ok(())
 }
-
+*/
 fn queue_table_row(split_name: &str, time: &str, out: &mut std::io::Stdout, row: u16) -> cross_result<()> {
     out.queue(MoveTo(1, row))?
         .queue(SetForegroundColor(GOOD))?
@@ -57,7 +57,7 @@ fn main() -> Result<(), Error> {
     let args: Vec<String> = env::args().collect();
     let mut out = stdout();
     out.execute(Clear(All)).unwrap();
-    let second = Duration::new(1, 0);
+    //let second = Duration::new(1, 0);
     let mut current_line = 0;
     let file = check_args(args).unwrap_or_else(|err| {
         eprintln!("{}", err);
@@ -77,11 +77,11 @@ fn main() -> Result<(), Error> {
         //introduce a new scope to print new rows each iteration
         {
             let table_rows = splits_to_print(&rows, current_line);
-            sleep(second);
+            //sleep(second);
             if current_line == table_rows.len() {
                 break 'main;
             }
-            print_split_names(table_rows, current_line, &mut out).unwrap();
+            queue_table_row(table_rows[current_line], "time", &mut out, current_line as u16).unwrap();
             current_line += 1;
             out.flush()?;
         }
