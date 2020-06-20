@@ -35,7 +35,7 @@ fn splits_to_print<'a>(split_vec: &'a Vec<&str>, line: usize) -> Vec<&'a str> {
 }
 
 //prints everything that needs to be shown, by queueing timer rows then flushing them at the end
-fn print_timer(out: &mut std::io::Stdout, rows: Vec<&str>) -> cross_result<()> {
+fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>) -> cross_result<()> {
     let mut current_line = 0;
     loop {
             //introduce a new scope to print new rows each iteration
@@ -49,7 +49,7 @@ fn print_timer(out: &mut std::io::Stdout, rows: Vec<&str>) -> cross_result<()> {
 
             }
         }
-        //makes crossterm do all the stuff we queued in queue_table_row()
+        //makes crossterm do all the stuff we queued in queue_table_row() calls
         out.flush()?;
     Ok(())
 }
@@ -88,12 +88,14 @@ fn main() -> Result<(), Error> {
         rows.push(split);
     }
 
-    //gave the loop a name while i remembered how to do that in case i need to put another loop inside of it
-    //'main: loop {
-    //}
-    print_timer(&mut out, rows).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
+    //gave the loop a name because it will eventually have another loop inside
+    'main: loop {
+        print_timer(&mut out, &rows).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
+        break 'main;
+    }
+
     //makes it so that anything you do in the terminal after use this isnt weirdly colored, and resets the cursor position
-    out.execute(SetForegroundColor(RESET)).unwrap();
-    out.execute(MoveTo(1, 19)).unwrap();
+    out.execute(SetForegroundColor(RESET)).expect("what did you do?");
+    out.execute(MoveTo(1, 19)).expect("seriously what did you do?");
     Ok(())
 }
