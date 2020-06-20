@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
 use crossterm::style::Color;
+
 #[derive(Serialize, Deserialize)]
 pub struct Split<'a> {
     pub name: &'a str,
