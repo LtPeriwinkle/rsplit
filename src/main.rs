@@ -20,7 +20,24 @@ fn check_args(args: Vec<String>) -> Result<String, &'static str> {
     Ok(splits.to_string())
 }
 
-//rewrote this function to get rid of out of bounds attempts
+//make the json file into a vec of Splits (from components.rs) and the split names into another vec
+fn get_splits<'a>(file: &'a String, _vec: Vec<Split>) -> (Vec<Split<'a>>, Vec<&'a str>) {
+    let mut rows = Vec::new();
+
+    let json_as_splits: Vec<Split> = serde_json::from_str(file.as_str()).unwrap_or_else(|err| {
+        eprintln!("{}", err);
+        process::exit(3);
+    });
+
+    for i in &json_as_splits {
+        let split = i.name;
+        rows.push(split);
+    }
+
+    (json_as_splits, rows)
+}
+
+//rewrote this function to get rid of out of bounds accessing
 fn splits_to_print<'a>(split_vec: &'a Vec<&str>, line: usize) -> Vec<&'a str> {
     if split_vec.len() < 18 {
         //i want a better way to do this but im lazy and this was fast to write
@@ -44,7 +61,7 @@ fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>) -> cross_result<()> 
                 if current_line == table_rows.len() {
                     break;
                 }
-                queue_table_row(table_rows[current_line], "time", out, current_line as u16).unwrap();
+                queue_table_row(table_rows[current_line], "time", out, current_line as u16)?;
                 current_line += 1;
 
             }
@@ -67,30 +84,25 @@ fn queue_table_row(split_name: &str, time: &str, out: &mut std::io::Stdout, row:
 
 fn main() -> Result<(), Error> {
     let args: Vec<String> = env::args().collect();
-    let mut out = stdout();
-    let mut rows = Vec::new();
-
-    //make sure we arent printing over other stuff
-    out.execute(Clear(All)).unwrap();
-
-    //make the json file into a vec of Splits (from components.rs) and the split names into another vec
     let file = check_args(args).unwrap_or_else(|err| {
         eprintln!("{}", err);
         process::exit(1);
     });
-    let json_raw = fs::read_to_string(file).unwrap_or_else(|err| {
-        eprintln!("{}", err);
-        process::exit(2);
-    });
-    let json_as_splits: Vec<Split> = serde_json::from_str(&json_raw)?;
-    for i in json_as_splits {
-        let split = i.name;
-        rows.push(split);
-    }
+    let mut out = stdout();
+
+    //deal with the json stuff, yeah its ugly but it gets the job done
+    let json_raw = fs::read_to_string(file)?;
+    let useless_item: Vec<Split> = Vec::new();
+    let results = get_splits(&json_raw, useless_item);
+    let names = results.1;
+    let _split_vec = results.0;
+
+    //make sure we arent printing over other stuff
+    out.execute(Clear(All)).unwrap();
 
     //gave the loop a name because it will eventually have another loop inside
     'main: loop {
-        print_timer(&mut out, &rows).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
+        print_timer(&mut out, &names).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
         break 'main;
     }
 
