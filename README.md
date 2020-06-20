@@ -5,7 +5,7 @@ probably works best in something like [terminator](https://github.com/gnome-term
 I'm fairly new to rust and doing this as basically a learning exercise so feel free to tell me all the things I'm doing wrong.
 
 ## a rough roadmap for this project:
-1. figure out how to update terminal how i want (*in progress*)
+1. figure out how to update terminal how i want (**mostly done**)
 2. parse json split files (**finished in old version**)
 3. get timer working
 4. keyboard inputs
