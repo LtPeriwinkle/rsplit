@@ -5,13 +5,14 @@ use crossterm::{QueueableCommand, ExecutableCommand, cursor::MoveTo};
 use crossterm::style::{Print, SetForegroundColor};
 use crossterm::terminal::{Clear, ClearType::All};
 use serde_json;
+use spin_sleep::{SpinSleeper};
 
 //file with structs, static vars; i didnt want to have them cluttering up this file
 mod components;
 use components::*;
 
 //make the json file into a vec of Splits (from components.rs) and the split names into another vec
-fn get_splits<'a>(file: &'a String, _vec: Vec<Split>) -> (Vec<Split<'a>>, Vec<&'a str>) {
+fn get_splits<'a>(file: &'a String) -> (Vec<Split<'a>>, Vec<&'a str>) {
     let mut rows = Vec::new();
 
     let json_as_splits: Vec<Split> = serde_json::from_str(file.as_str()).unwrap_or_else(|err| {
@@ -42,8 +43,7 @@ fn splits_to_print<'a>(split_vec: &'a Vec<&str>, line: usize) -> Vec<&'a str> {
 }
 
 //prints everything that needs to be shown, by queueing timer rows then flushing them at the end
-fn print_timer(out: &mut std::io::Stdout, rows: Vec<&str>) -> cross_result<()> {
-    let mut current_line = 0;
+fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: usize) -> cross_result<()> {
     loop {
             //introduce a new scope to print new rows each iteration
             {
@@ -85,8 +85,7 @@ fn main() -> Result<(), Error> {
         eprintln!("{}", err);
         process::exit(2);
     });
-    let useless_item: Vec<Split> = Vec::new();
-    let results = get_splits(&json_raw, useless_item);
+    let results = get_splits(&json_raw);
     let names = results.1;
     //will be used for time comparisons later, not useful right now
     let _split_vec = results.0;
@@ -94,14 +93,22 @@ fn main() -> Result<(), Error> {
     //make sure we arent printing over other stuff
     out.execute(Clear(All)).unwrap();
 
+    //supposed to be more accurate than normal sleep, currently set to spin for last 100μs of sleep time
+    let update_timer = SpinSleeper::new(100_000);
+
+    let mut current_line: usize = 0;
     //gave the loop a name because it will eventually have another loop inside and actually need to be a loop
     'main: loop {
-        print_timer(&mut out, names).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
-        break 'main;
+        print_timer(&mut out, &names, current_line).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
+        current_line += 1;
+        update_timer.sleep_s(0.1);
+        if current_line == 5 {
+            break 'main;
+        }
     }
 
     //makes it so that anything you do in the terminal after use this isnt weirdly colored, and resets the cursor position
-    out.execute(SetForegroundColor(RESET)).expect("what did you do?");
-    out.execute(MoveTo(1, 19)).expect("seriously what did you do?");
+    out.execute(SetForegroundColor(RESET)).expect("sorry");
+    out.execute(MoveTo(1, 19)).expect("sorry");
     Ok(())
 }
