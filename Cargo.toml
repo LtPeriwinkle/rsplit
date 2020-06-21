@@ -10,3 +10,4 @@ edition = "2018"
 crossterm = "0.17"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
+spin_sleep = "1.0"
