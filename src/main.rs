@@ -5,7 +5,7 @@ use crossterm::{QueueableCommand, ExecutableCommand, cursor::MoveTo};
 use crossterm::style::{Print, SetForegroundColor};
 use crossterm::terminal::{Clear, ClearType::All};
 use serde_json;
-use spin_sleep::SpinSleeper;
+use spin_sleep::LoopHelper;
 
 //file with structs, static vars; i didnt want to have them cluttering up this file
 mod components;
@@ -93,15 +93,16 @@ fn main() -> Result<(), Error> {
     //make sure we arent printing over other stuff
     out.execute(Clear(All)).unwrap();
 
-    //supposed to be more accurate than normal sleep, currently set to spin for last 100μs of sleep time (which is stupid precise)
-    let update_timer = SpinSleeper::new(100_000);
+    //supposed to be more accurate than normal sleep, am using to keep the loop at every 10 ms
+    let mut update_timer = LoopHelper::builder().build_with_target_rate(100.0);
 
     let mut current_line: usize = 0;
     let mut counter: usize = 0;
     //gave the loop a name because it will eventually have another loop inside and actually need to be a loop
     'main: loop {
-        update_timer.sleep_s(0.01);
+        update_timer.loop_start();
         counter += 10;
+        //function from components.rs
         let test = ms_to_readable(&counter);
         let string = format!("{:?}:{:?}:{:02?}.{:04?}", test.0, test.1, test.2, test.3);
         print_timer(&mut out, &names, current_line, &string).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
@@ -109,6 +110,7 @@ fn main() -> Result<(), Error> {
         if counter == 61050 {
             break 'main;
         }
+        update_timer.loop_sleep();
     }
 
     //makes it so that anything you do in the terminal after use this isnt weirdly colored, and resets the cursor position
