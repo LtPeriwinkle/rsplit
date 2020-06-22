@@ -24,6 +24,8 @@ pub fn check_args(args: Vec<String>) -> Result<String, &'static str> {
     Ok(splits.to_string())
 }
 
+//i bet there is a crate to do this better but guess what i just smashed my face into my keyboard and it works
+//so i dont feel like changing it
 pub fn ms_to_readable<'a>(ms: &usize) -> (usize, usize, usize, usize) {
     let mut new_ms = *ms;
     let mut s: usize;
