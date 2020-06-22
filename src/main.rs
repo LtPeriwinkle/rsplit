@@ -43,7 +43,7 @@ fn splits_to_print<'a>(split_vec: &'a Vec<&str>, line: usize) -> Vec<&'a str> {
 }
 
 //prints everything that needs to be shown, by queueing timer rows then flushing them at the end
-fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: usize) -> cross_result<()> {
+fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: usize, time: &str) -> cross_result<()> {
     loop {
             //introduce a new scope to print new rows each iteration
             {
@@ -51,7 +51,7 @@ fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: us
                 if current_line == table_rows.len() {
                     break;
                 }
-                queue_table_row(table_rows[current_line], "time", out, current_line as u16)?;
+                queue_table_row(table_rows[current_line], &time, out, current_line as u16)?;
                 current_line += 1;
 
             }
@@ -97,16 +97,16 @@ fn main() -> Result<(), Error> {
     let update_timer = SpinSleeper::new(100_000);
 
     let mut current_line: usize = 0;
-    let mut counter = 0;
+    let mut counter: usize = 0;
     //gave the loop a name because it will eventually have another loop inside and actually need to be a loop
     'main: loop {
-        //print_timer(&mut out, &names, current_line).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
-        //current_line += 1;
         update_timer.sleep_s(0.01);
         counter += 10;
-        out.execute(Clear(All)).unwrap().execute(MoveTo(1, 1)).unwrap();
-        println!("{}", counter);
-        if counter == 20000 {
+        let test = ms_to_readable(&counter);
+        let string = format!("{:?}:{:?}:{:02?}.{:04?}", test.0, test.1, test.2, test.3);
+        print_timer(&mut out, &names, current_line, &string).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
+        //current_line += 1;
+        if counter == 61050 {
             break 'main;
         }
     }
