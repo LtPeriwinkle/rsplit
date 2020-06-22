@@ -23,3 +23,41 @@ pub fn check_args(args: Vec<String>) -> Result<String, &'static str> {
     let splits = &args[1];
     Ok(splits.to_string())
 }
+
+pub fn ms_to_str<'a>(mut ms: usize) -> &'a str {
+    let mut s: usize;
+    let mut min: usize;
+    let hr: usize;
+    let remain_ms: usize;
+    let remain_s: usize;
+    let remain_min: usize;
+
+    if ms >= 1000 {
+        remain_ms = &ms % 1000;
+        ms = ms - remain_ms;
+        s = &ms / 1000;
+    }
+    else {
+        return ms.to_string().as_str();
+    }
+
+    if s >= 60 {
+        remain_s = s % 60;
+        s -= remain_s;
+        min = s / 60;
+    }
+    else {
+        return format!("{}.{}", s, remain_ms).as_str();
+    }
+
+    if min >= 60 {
+        remain_min = min % 60;
+        min -= remain_min;
+        hr = min / 60;
+    }
+    else {
+        return format!("{}:{}.{}", min, s, ms).as_str();
+    }
+    return format!("{}:{}:{}.{}", hr, min, s, ms).as_str();
+
+}
