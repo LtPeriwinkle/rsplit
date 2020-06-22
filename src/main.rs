@@ -5,7 +5,7 @@ use crossterm::{QueueableCommand, ExecutableCommand, cursor::MoveTo};
 use crossterm::style::{Print, SetForegroundColor};
 use crossterm::terminal::{Clear, ClearType::All};
 use serde_json;
-use spin_sleep::{SpinSleeper};
+use spin_sleep::SpinSleeper;
 
 //file with structs, static vars; i didnt want to have them cluttering up this file
 mod components;
@@ -93,16 +93,20 @@ fn main() -> Result<(), Error> {
     //make sure we arent printing over other stuff
     out.execute(Clear(All)).unwrap();
 
-    //supposed to be more accurate than normal sleep, currently set to spin for last 100μs of sleep time
+    //supposed to be more accurate than normal sleep, currently set to spin for last 100μs of sleep time (which is stupid precise)
     let update_timer = SpinSleeper::new(100_000);
 
     let mut current_line: usize = 0;
+    let mut counter = 0;
     //gave the loop a name because it will eventually have another loop inside and actually need to be a loop
     'main: loop {
-        print_timer(&mut out, &names, current_line).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
-        current_line += 1;
-        update_timer.sleep_s(0.1);
-        if current_line == 5 {
+        //print_timer(&mut out, &names, current_line).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
+        //current_line += 1;
+        update_timer.sleep_s(0.01);
+        counter += 10;
+        out.execute(Clear(All)).unwrap().execute(MoveTo(1, 1)).unwrap();
+        println!("{}", counter);
+        if counter == 20000 {
             break 'main;
         }
     }
