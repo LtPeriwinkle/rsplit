@@ -24,7 +24,8 @@ pub fn check_args(args: Vec<String>) -> Result<String, &'static str> {
     Ok(splits.to_string())
 }
 
-pub fn ms_to_str<'a>(mut ms: usize) -> &'a str {
+pub fn ms_to_readable<'a>(ms: &usize) -> (usize, usize, usize, usize) {
+    let mut new_ms = *ms;
     let mut s: usize;
     let mut min: usize;
     let hr: usize;
@@ -32,13 +33,13 @@ pub fn ms_to_str<'a>(mut ms: usize) -> &'a str {
     let remain_s: usize;
     let remain_min: usize;
 
-    if ms >= 1000 {
-        remain_ms = &ms % 1000;
-        ms = ms - remain_ms;
-        s = &ms / 1000;
+    if new_ms >= 1000 {
+        remain_ms = new_ms % 1000;
+        new_ms -= remain_ms;
+        s = new_ms / 1000;
     }
     else {
-        return ms.to_string().as_str();
+        return (0, 0, 0, new_ms);
     }
 
     if s >= 60 {
@@ -47,7 +48,7 @@ pub fn ms_to_str<'a>(mut ms: usize) -> &'a str {
         min = s / 60;
     }
     else {
-        return format!("{}.{}", s, remain_ms).as_str();
+        return (0, 0, s, new_ms);
     }
 
     if min >= 60 {
@@ -56,8 +57,8 @@ pub fn ms_to_str<'a>(mut ms: usize) -> &'a str {
         hr = min / 60;
     }
     else {
-        return format!("{}:{}.{}", min, s, ms).as_str();
+        return (0, min, s, new_ms);
     }
-    return format!("{}:{}:{}.{}", hr, min, s, ms).as_str();
+    return (hr, min, s, new_ms);
 
 }
