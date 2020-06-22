@@ -37,28 +37,19 @@ pub fn ms_to_readable<'a>(ms: &usize) -> (usize, usize, usize, usize) {
         remain_ms = new_ms % 1000;
         new_ms -= remain_ms;
         s = new_ms / 1000;
-    }
-    else {
-        return (0, 0, 0, new_ms);
-    }
 
-    if s >= 60 {
-        remain_s = s % 60;
-        s -= remain_s;
-        min = s / 60;
-    }
-    else {
-        return (0, 0, s, new_ms);
-    }
+        if s >= 60 {
+            remain_s = s % 60;
+            s -= remain_s;
+            min = s / 60;
 
-    if min >= 60 {
-        remain_min = min % 60;
-        min -= remain_min;
-        hr = min / 60;
-    }
-    else {
-        return (0, min, s, new_ms);
-    }
-    return (hr, min, s, new_ms);
+            if min >= 60 {
+                remain_min = min % 60;
+                min -= remain_min;
+                hr = min / 60;
+            } else { remain_min = min; hr = 0; }
+        } else { remain_s = s; remain_min = 0; hr = 0; }
+    } else { remain_ms = new_ms; remain_s = 0; remain_min = 0; hr = 0; }
+    return (hr, remain_min, remain_s, remain_ms);
 
 }
