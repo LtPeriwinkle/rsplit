@@ -103,8 +103,8 @@ fn main() -> Result<(), Error> {
         update_timer.loop_start();
         counter += 10;
         //function from components.rs
-        let test = ms_to_readable(&counter);
-        let string = format!("{:?}:{:?}:{:02?}.{:04?}", test.0, test.1, test.2, test.3);
+        let times = ms_to_readable(&counter);
+        let string = format!("{:?}:{:?}:{:02?}.{:03?}", times.0, times.1, times.2, times.3);
         print_timer(&mut out, &names, current_line, &string).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
         //current_line += 1;
         if counter == 61050 {
