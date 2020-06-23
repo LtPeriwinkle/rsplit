@@ -30,13 +30,19 @@ fn get_splits<'a>(file: &'a String) -> (Vec<Split<'a>>, Vec<&'a str>) {
 
 //gets a chunk of the full vec of split names to print each time
 fn splits_to_print<'a>(split_vec: &'a Vec<&str>, line: usize) -> Vec<&'a str> {
-    if split_vec.len() < 18 {
-        //i want a better way to do this but im lazy and this was fast to write
+    let length = split_vec.len();
+    if length < 18 {
         return split_vec.to_vec();
-    } else {
-        //my brain hurts
-        let end = if split_vec.len() < line + 18 {split_vec.len() - 1} else {line + 18};
+    } else if length == 18 {
+        let print_vec = split_vec.clone();
+        print_vec
+    } else if length > 18 && line + 18 > length {
+        let end = length;
         //i have no idea why line works but it does, thank you rust forum
+        let print_vec = Vec::from_iter(split_vec[line..end].iter().cloned());
+        print_vec
+    } else {
+        let end = line + 18;
         let print_vec = Vec::from_iter(split_vec[line..end].iter().cloned());
         print_vec
     }
@@ -47,10 +53,10 @@ fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: us
     loop {
             //introduce a new scope to print new rows each iteration
             {
-                let table_rows = splits_to_print(&rows, current_line);
-                if current_line == table_rows.len() {
+                if current_line == rows.len() {
                     break;
                 }
+                let table_rows = splits_to_print(&rows, current_line);
                 queue_table_row(table_rows[current_line], &time, out, current_line as u16)?;
                 current_line += 1;
 
@@ -122,11 +128,12 @@ fn main() -> Result<(), Error> {
                 break 'update;
             }
         }
-        if current_line == names.len() {
-            break 'main
+        if current_line == names.len() - 1 {
+            break 'main;
         } else {
             current_line += 1;
         }
+
     }
 
     //makes it so that anything you do in the terminal after use this isnt weirdly colored, and resets the cursor position
