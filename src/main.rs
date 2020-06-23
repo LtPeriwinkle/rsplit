@@ -1,11 +1,11 @@
-use std::{env, fs, process, iter::FromIterator, thread, sync::mpsc};
+use std::{env, fs, process, iter::FromIterator, thread, sync::mpsc, time::Duration};
 use std::io::{Write, stdout, Error};
 use crossterm::Result as cross_result;
 use crossterm::{QueueableCommand, ExecutableCommand, cursor::MoveTo};
 use crossterm::style::{Print, SetForegroundColor};
 use crossterm::terminal::{Clear, ClearType::All};
 use serde_json;
-use spin_sleep::LoopHelper;
+use spin_sleep::{LoopHelper, sleep};
 
 //file with structs, static vars; i didnt want to have them cluttering up this file
 mod components;
@@ -99,9 +99,11 @@ fn main() -> Result<(), Error> {
     let mut current_line: usize = 0;
     let mut counter: usize = 0;
 
+    //multithreading scary but i couldnt think of anything better
     let (tx, rx) = mpsc::channel();
-    let event_listener = thread::spawn(move ||
+    let _event_listener = thread::spawn(move ||
         loop {
+            sleep(Duration::new(0, 500_000));
             tx.send(handle_events()).unwrap();
         }
     );
@@ -114,12 +116,17 @@ fn main() -> Result<(), Error> {
             let times = ms_to_readable(&counter);
             let string = format!("{:?}:{:?}:{:02?}.{:03?}", times.0, times.1, times.2, times.3);
             print_timer(&mut out, &names, current_line, &string).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
-            if counter == 61050 {
-                break 'main;
-            }
             update_timer.loop_sleep();
+            let event = rx.try_recv();
+            if event == Ok(0) {
+                break 'update;
+            }
         }
-        //current_line += 1;
+        if current_line == names.len() {
+            break 'main
+        } else {
+            current_line += 1;
+        }
     }
 
     //makes it so that anything you do in the terminal after use this isnt weirdly colored, and resets the cursor position
