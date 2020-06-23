@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
 use crossterm::style::Color;
+use crossterm::event::{read, Event, KeyCode};
 
 #[derive(Serialize, Deserialize)]
 pub struct Split<'a> {
@@ -53,5 +54,17 @@ pub fn ms_to_readable<'a>(ms: &usize) -> (usize, usize, usize, usize) {
         } else { remain_s = s; remain_min = 0; hr = 0; }
     } else { remain_ms = new_ms; remain_s = 0; remain_min = 0; hr = 0; }
     return (hr, remain_min, remain_s, remain_ms);
+
+}
+
+pub fn handle_events() -> u8 {
+
+let event = read().expect("something broke");
+
+if event == Event::Key(KeyCode::Enter.into()) {
+    return 0;
+} else {
+    return 1;
+}
 
 }
