@@ -1,4 +1,4 @@
-use std::{env, fs, process, iter::FromIterator};
+use std::{env, fs, process, iter::FromIterator, thread, sync::mpsc};
 use std::io::{Write, stdout, Error};
 use crossterm::Result as cross_result;
 use crossterm::{QueueableCommand, ExecutableCommand, cursor::MoveTo};
@@ -98,19 +98,28 @@ fn main() -> Result<(), Error> {
 
     let mut current_line: usize = 0;
     let mut counter: usize = 0;
+
+    let (tx, rx) = mpsc::channel();
+    let event_listener = thread::spawn(move ||
+        loop {
+            tx.send(handle_events()).unwrap();
+        }
+    );
+
     //gave the loop a name because it will eventually have another loop inside and actually need to be a loop
     'main: loop {
-        update_timer.loop_start();
-        counter += 10;
-        //function from components.rs
-        let times = ms_to_readable(&counter);
-        let string = format!("{:?}:{:?}:{:02?}.{:03?}", times.0, times.1, times.2, times.3);
-        print_timer(&mut out, &names, current_line, &string).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
-        //current_line += 1;
-        if counter == 61050 {
-            break 'main;
+        'update: loop {
+            update_timer.loop_start();
+            counter += 10;
+            let times = ms_to_readable(&counter);
+            let string = format!("{:?}:{:?}:{:02?}.{:03?}", times.0, times.1, times.2, times.3);
+            print_timer(&mut out, &names, current_line, &string).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
+            if counter == 61050 {
+                break 'main;
+            }
+            update_timer.loop_sleep();
         }
-        update_timer.loop_sleep();
+        //current_line += 1;
     }
 
     //makes it so that anything you do in the terminal after use this isnt weirdly colored, and resets the cursor position
