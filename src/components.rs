@@ -57,14 +57,28 @@ pub fn ms_to_readable<'a>(ms: &usize) -> (usize, usize, usize, usize) {
 
 }
 
+//the function called in spawned thread to poll for events, currently only polls for enter key
 pub fn handle_events() -> u8 {
 
-let event = read().expect("something broke");
+    let event = read().expect("something broke");
 
-if event == Event::Key(KeyCode::Enter.into()) {
-    return 0;
-} else {
-    return 1;
+    if event == Event::Key(KeyCode::Enter.into()) {
+        return 0;
+    } else {
+        return 1;
+    }
 }
+
+//gets rid of unnecessary 0s to print
+pub fn format(numbers: (usize, usize, usize, usize)) -> String {
+    let mut formatted_string = String::new();
+    if numbers.0 != 0 {
+        formatted_string.push_str(&format!("{}:", numbers.0));
+    }
+    if numbers.1 != 0 {
+        formatted_string.push_str(&format!("{}:", numbers.1));
+    }
+    formatted_string.push_str(&format!("{:02}.{:03}", numbers.2, numbers.3));
+    formatted_string
 
 }
