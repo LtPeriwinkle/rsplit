@@ -29,15 +29,14 @@ fn get_splits<'a>(file: &'a String) -> (Vec<Split<'a>>, Vec<&'a str>) {
 }
 
 //gets a chunk of the full vec of split names to print each time
-fn splits_to_print<'a>(split_vec: &'a Vec<&str>, line: usize) -> Vec<&'a str> {
+fn splits_to_print<'a>(split_vec: &'a Vec<&str>, mut line: usize) -> Vec<&'a str> {
     let length = split_vec.len();
-    if length < 18 {
-        return split_vec.to_vec();
-    } else if length == 18 {
+    if length < 18 || length == 18 {
         let print_vec = split_vec.clone();
         print_vec
     } else if length > 18 && line + 18 > length {
         let end = length;
+        line = end - 18;
         //i have no idea why line works but it does, thank you rust forum
         let print_vec = Vec::from_iter(split_vec[line..end].iter().cloned());
         print_vec
@@ -53,8 +52,14 @@ fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: us
     loop {
             //introduce a new scope to print new rows each iteration
             {
-                if current_line == rows.len() {
-                    break;
+                if rows.len() % 2 == 0 {
+                    if current_line == rows.len() - 1 {
+                        break;
+                    }
+                } else {
+                    if current_line == rows.len() - 1 {
+                        break;
+                    }
                 }
                 let table_rows = splits_to_print(&rows, current_line);
                 queue_table_row(table_rows[current_line], &time, out, current_line as u16)?;
@@ -122,11 +127,11 @@ fn main() -> Result<(), Error> {
             let times = ms_to_readable(&counter);
             let string = format!("{:?}:{:?}:{:02?}.{:03?}", times.0, times.1, times.2, times.3);
             print_timer(&mut out, &names, current_line, &string).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
-            update_timer.loop_sleep();
             let event = rx.try_recv();
             if event == Ok(0) {
                 break 'update;
             }
+            update_timer.loop_sleep();
         }
         if current_line == names.len() - 1 {
             break 'main;
