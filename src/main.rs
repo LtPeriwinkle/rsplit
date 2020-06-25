@@ -34,7 +34,7 @@ fn splits_to_print<'a>(split_vec: &'a Vec<&str>, mut line: usize) -> Vec<&'a str
     if length < 18 || length == 18 {
         let print_vec = split_vec.clone();
         print_vec
-    } else if length > 18 && line + 18 > length {
+    } else if line + 18 > length {
         let end = length;
         line = end - 18;
         //i have no idea why line works but it does, thank you rust forum
@@ -49,22 +49,15 @@ fn splits_to_print<'a>(split_vec: &'a Vec<&str>, mut line: usize) -> Vec<&'a str
 
 //prints everything that needs to be shown, by queueing timer rows then flushing them at the end
 fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: usize, time: &str) -> cross_result<()> {
+    let table_rows = splits_to_print(&rows, current_line);
     loop {
             //introduce a new scope to print new rows each iteration
             {
-                if rows.len() % 2 == 0 {
-                    if current_line == rows.len() - 1 {
-                        break;
-                    }
-                } else {
-                    if current_line == rows.len() - 1 {
-                        break;
-                    }
+                if current_line == table_rows.len() {
+                    break;
                 }
-                let table_rows = splits_to_print(&rows, current_line);
                 queue_table_row(table_rows[current_line], &time, out, current_line as u16)?;
                 current_line += 1;
-
             }
         }
         //makes crossterm do all the stuff queued in queue_table_row() calls
@@ -76,10 +69,11 @@ fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: us
 //and queues a row with name + time into the crossterm buffer
 fn queue_table_row(split_name: &str, time: &str, out: &mut std::io::Stdout, row: u16) -> cross_result<()> {
     out.queue(MoveTo(1, row))?
-        .queue(SetForegroundColor(GOOD))?
         .queue(Print(split_name))?
         .queue(MoveTo(20, row))?
-        .queue(Print(time))?;
+        .queue(SetForegroundColor(GOOD))?
+        .queue(Print(time))?
+        .queue(SetForegroundColor(RESET))?;
     Ok(())
 }
 
@@ -108,24 +102,24 @@ fn main() -> Result<(), Error> {
     let mut update_timer = LoopHelper::builder().build_with_target_rate(100.0);
 
     let mut current_line: usize = 0;
-    let mut counter: usize = 0;
+    let mut ms: usize = 0;
 
     //multithreading scary but i couldnt think of anything better
     let (tx, rx) = mpsc::channel();
     let _event_listener = thread::spawn(move ||
         loop {
-            sleep(Duration::new(0, 500_000));
+            sleep(Duration::new(0, 50_000));
             tx.send(handle_events()).unwrap();
         }
     );
 
-    //gave the loop a name because it will eventually have another loop inside and actually need to be a loop
     'main: loop {
         'update: loop {
             update_timer.loop_start();
-            counter += 10;
-            let times = ms_to_readable(&counter);
-            let string = format!("{:?}:{:?}:{:02?}.{:03?}", times.0, times.1, times.2, times.3);
+            ms += 10;
+            let times = ms_to_readable(&ms);
+            //in components.rs
+            let string = format(times);
             print_timer(&mut out, &names, current_line, &string).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
             let event = rx.try_recv();
             if event == Ok(0) {
@@ -138,7 +132,6 @@ fn main() -> Result<(), Error> {
         } else {
             current_line += 1;
         }
-
     }
 
     //makes it so that anything you do in the terminal after use this isnt weirdly colored, and resets the cursor position
