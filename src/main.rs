@@ -3,7 +3,7 @@ use std::io::{Write, stdout, Error};
 use crossterm::Result as cross_result;
 use crossterm::{QueueableCommand, ExecutableCommand, cursor::MoveTo};
 use crossterm::style::{Print, SetForegroundColor};
-use crossterm::terminal::{Clear, ClearType::All};
+use crossterm::terminal::{SetTitle, Clear, ClearType::{All, CurrentLine}};
 use serde_json;
 use spin_sleep::{LoopHelper, sleep};
 
@@ -69,6 +69,7 @@ fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: us
 //and queues a row with name + time into the crossterm buffer
 fn queue_table_row(split_name: &str, time: &str, out: &mut std::io::Stdout, row: u16) -> cross_result<()> {
     out.queue(MoveTo(1, row))?
+        .queue(Clear(CurrentLine))?
         .queue(Print(split_name))?
         .queue(MoveTo(20, row))?
         .queue(SetForegroundColor(GOOD))?
@@ -96,7 +97,7 @@ fn main() -> Result<(), Error> {
     let _split_vec = results.0;
 
     //make sure we arent printing over other stuff
-    out.execute(Clear(All)).unwrap();
+    out.execute(Clear(All)).unwrap().execute(SetTitle("rsplit")).expect("could not initialize terminal");
 
     //supposed to be more accurate than normal sleep, am using to keep the loop at every 10 ms
     let mut update_timer = LoopHelper::builder().build_with_target_rate(100.0);
@@ -136,6 +137,6 @@ fn main() -> Result<(), Error> {
 
     //makes it so that anything you do in the terminal after use this isnt weirdly colored, and resets the cursor position
     out.execute(SetForegroundColor(RESET)).expect("sorry");
-    out.execute(MoveTo(1, 19)).expect("sorry");
+    out.execute(MoveTo(0, 19)).expect("sorry");
     Ok(())
 }
