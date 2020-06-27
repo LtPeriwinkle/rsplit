@@ -119,7 +119,7 @@ fn main() -> Result<(), Error> {
             update_timer.loop_start();
             ms += 10;
             let times = ms_to_readable(&ms);
-            //in components.rs
+            //in components.rs, NOT the format!() macro
             let string = format(times);
             print_timer(&mut out, &names, current_line, &string).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
             let event = rx.try_recv();

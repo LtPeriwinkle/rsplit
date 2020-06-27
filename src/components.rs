@@ -69,7 +69,7 @@ pub fn handle_events() -> u8 {
     }
 }
 
-//gets rid of unnecessary 0s to print
+//gets rid of unnecessary 0s to print a nicer looking time
 pub fn format(numbers: (usize, usize, usize, usize)) -> String {
     let mut formatted_string = String::new();
     if numbers.0 != 0 {
