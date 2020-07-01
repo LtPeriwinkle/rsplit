@@ -49,19 +49,16 @@ fn splits_to_print<'a>(split_vec: &'a Vec<&str>, mut line: usize) -> Vec<&'a str
 
 //prints everything that needs to be shown, by queueing timer rows then flushing them at the end
 fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: usize, time: &str) -> cross_result<()> {
-    let table_rows = splits_to_print(&rows, current_line);
+    let table_rows = splits_to_print(rows, current_line);
     loop {
-            //introduce a new scope to print new rows each iteration
-            {
-                if current_line == table_rows.len() {
-                    break;
-                }
-                queue_table_row(table_rows[current_line], &time, out, current_line as u16)?;
-                current_line += 1;
-            }
+        if current_line == table_rows.len() {
+            break;
         }
-        //makes crossterm do all the stuff queued in queue_table_row() calls
-        out.flush()?;
+        queue_table_row(table_rows[current_line], &time, out, current_line as u16)?;
+        current_line += 1;
+    }
+    //makes crossterm do all the stuff queued in queue_table_row() calls
+    out.flush()?;
     Ok(())
 }
 
@@ -84,6 +81,7 @@ fn main() -> Result<(), Error> {
         eprintln!("{}", err);
         process::exit(1);
     });
+
     let mut out = stdout();
 
     //deal with the json stuff, yeah its ugly but it gets the job done
