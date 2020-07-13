@@ -1,6 +1,6 @@
 # rsplit
 (almost workable) TUI speedrun timer written in rust\
-crossplatform since it uses crossterm\
+theoretically crossplatform since it uses crossterm, however i have not tested it outside of linux\
 probably works best in something like [terminator](https://github.com/gnome-terminator/terminator) since it can show the colors correctly\
 I'm fairly new to rust and doing this as basically a learning exercise so feel free to tell me all the things I'm doing wrong.
 
