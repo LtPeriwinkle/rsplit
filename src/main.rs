@@ -48,7 +48,7 @@ fn splits_to_print<'a>(split_vec: &'a Vec<&str>, mut line: usize) -> Vec<&'a str
 }
 
 //prints everything that needs to be shown, by queueing timer rows then flushing them at the end
-fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: usize, time: &str) -> cross_result<()> {
+fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: usize, time_vec: &Vec<String>, total: &str) -> cross_result<()> {
     let table_rows = splits_to_print(rows, current_line);
     let timeline = current_line;
     current_line = 0;
@@ -56,14 +56,15 @@ fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: us
         if current_line == table_rows.len() {
             break;
         }
-        if current_line == timeline {
-            queue_table_row(table_rows[current_line], &time, out, current_line as u16)?;
+        if current_line < timeline {
+            queue_table_row(table_rows[current_line], &time_vec[current_line], out, current_line as u16)?;
         } else {
             queue_table_row(table_rows[current_line], "", out, current_line as u16)?;
         }
         current_line += 1;
     }
     //makes crossterm do all the stuff queued in queue_table_row() calls
+    out.queue(MoveTo(1, 19))?.queue(Print(total))?;
     out.flush()?;
     Ok(())
 }
@@ -100,6 +101,8 @@ fn main() -> Result<(), Error> {
     //will be used for time comparisons later, not useful right now
     let _split_vec = results.0;
 
+    let mut display_times = Vec::new();
+
     //make sure we arent printing over other stuff
     out.execute(Clear(All)).expect("could not initialize terminal").execute(SetTitle("rsplit")).expect("could not initialize terminal");
 
@@ -125,9 +128,10 @@ fn main() -> Result<(), Error> {
             let times = ms_to_readable(&ms);
             //in components.rs, NOT the format!() macro
             let string = format(times);
-            print_timer(&mut out, &names, current_line, &string).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
+            print_timer(&mut out, &names, current_line, &display_times, &string).unwrap_or_else(|err| {eprintln!("{}", err); process::exit(3)});
             let event = rx.try_recv();
             if event == Ok(0) {
+                display_times.push(string);
                 break 'update;
             }
             update_timer.loop_sleep();
