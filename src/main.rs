@@ -31,7 +31,7 @@ fn get_splits<'a>(file: &'a String) -> (Vec<Split<'a>>, Vec<&'a str>) {
 //gets a chunk of the full vec of split names to print each time
 fn splits_to_print<'a>(split_vec: &'a Vec<&str>, mut line: usize) -> Vec<&'a str> {
     let length = split_vec.len();
-    if length < 18 || length == 18 {
+    if length <= 18 {
         let print_vec = split_vec.clone();
         print_vec
     } else if line + 18 > length {
@@ -50,6 +50,7 @@ fn splits_to_print<'a>(split_vec: &'a Vec<&str>, mut line: usize) -> Vec<&'a str
 //prints everything that needs to be shown, by queueing timer rows then flushing them at the end
 fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: usize, time: &str) -> cross_result<()> {
     let table_rows = splits_to_print(rows, current_line);
+    current_line = 0;
     loop {
         if current_line == table_rows.len() {
             break;
@@ -95,7 +96,7 @@ fn main() -> Result<(), Error> {
     let _split_vec = results.0;
 
     //make sure we arent printing over other stuff
-    out.execute(Clear(All)).unwrap().execute(SetTitle("rsplit")).expect("could not initialize terminal");
+    out.execute(Clear(All)).expect("could not initialize terminal").execute(SetTitle("rsplit")).expect("could not initialize terminal");
 
     //supposed to be more accurate than normal sleep, am using to keep the loop at every 10 ms
     let mut update_timer = LoopHelper::builder().build_with_target_rate(100.0);
@@ -134,7 +135,6 @@ fn main() -> Result<(), Error> {
     }
 
     //makes it so that anything you do in the terminal after use this isnt weirdly colored, and resets the cursor position
-    out.execute(SetForegroundColor(RESET)).expect("sorry");
-    out.execute(MoveTo(0, 19)).expect("sorry");
+    out.execute(SetForegroundColor(RESET)).expect("could not clear terminal").execute(MoveTo(0, 19)).expect("could not clear terminal");
     Ok(())
 }
