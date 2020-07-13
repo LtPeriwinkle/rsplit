@@ -56,7 +56,7 @@ pub fn ms_to_readable<'a>(ms: &usize) -> (usize, usize, usize, usize) {
 
     } else { remain_ms = new_ms; remain_s = 0; remain_min = 0; hr = 0; }
 
-    return (hr, remain_min, remain_s, remain_ms);
+    return (hr, remain_min, remain_s, remain_ms / 10);
 
 }
 
@@ -81,7 +81,7 @@ pub fn format(numbers: (usize, usize, usize, usize)) -> String {
     if numbers.1 != 0 {
         formatted_string.push_str(&format!("{}:", numbers.1));
     }
-    formatted_string.push_str(&format!("{:02}.{:03}", numbers.2, numbers.3));
+    formatted_string.push_str(&format!("{:02}.{:02}", numbers.2, numbers.3));
     formatted_string
 
 }
