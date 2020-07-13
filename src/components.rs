@@ -51,8 +51,11 @@ pub fn ms_to_readable<'a>(ms: &usize) -> (usize, usize, usize, usize) {
                 min -= remain_min;
                 hr = min / 60;
             } else { remain_min = min; hr = 0; }
+
         } else { remain_s = s; remain_min = 0; hr = 0; }
+
     } else { remain_ms = new_ms; remain_s = 0; remain_min = 0; hr = 0; }
+
     return (hr, remain_min, remain_s, remain_ms);
 
 }
@@ -63,9 +66,9 @@ pub fn handle_events() -> u8 {
     let event = read().expect("something broke idk lol");
 
     if event == Event::Key(KeyCode::Enter.into()) {
-        return 0;
+        0
     } else {
-        return 1;
+        1
     }
 }
 
