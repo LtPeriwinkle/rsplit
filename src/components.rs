@@ -60,7 +60,7 @@ pub fn ms_to_readable<'a>(ms: &usize) -> (usize, usize, usize, usize) {
 //the function called in spawned thread to poll for events, currently only polls for enter key
 pub fn handle_events() -> u8 {
 
-    let event = read().expect("something broke");
+    let event = read().expect("something broke idk lol");
 
     if event == Event::Key(KeyCode::Enter.into()) {
         return 0;
