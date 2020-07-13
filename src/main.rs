@@ -50,12 +50,17 @@ fn splits_to_print<'a>(split_vec: &'a Vec<&str>, mut line: usize) -> Vec<&'a str
 //prints everything that needs to be shown, by queueing timer rows then flushing them at the end
 fn print_timer(out: &mut std::io::Stdout, rows: &Vec<&str>, mut current_line: usize, time: &str) -> cross_result<()> {
     let table_rows = splits_to_print(rows, current_line);
+    let timeline = current_line;
     current_line = 0;
     loop {
         if current_line == table_rows.len() {
             break;
         }
-        queue_table_row(table_rows[current_line], &time, out, current_line as u16)?;
+        if current_line == timeline {
+            queue_table_row(table_rows[current_line], &time, out, current_line as u16)?;
+        } else {
+            queue_table_row(table_rows[current_line], "", out, current_line as u16)?;
+        }
         current_line += 1;
     }
     //makes crossterm do all the stuff queued in queue_table_row() calls
