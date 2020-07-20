@@ -2,7 +2,7 @@
 (almost workable) TUI speedrun timer written in rust\
 theoretically crossplatform since it uses crossterm, however i have not tested it outside of linux\
 probably works best in something like [terminator](https://github.com/gnome-terminator/terminator) since it can show the colors correctly\
-I'm fairly new to rust and doing this as basically a learning exercise so feel free to tell me all the things I'm doing wrong.
+**this is such a mess that i've taken a break from developing it**
 
 ## a rough roadmap for this project:
 1. figure out how to update terminal how i want (**done**)
