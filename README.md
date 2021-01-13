@@ -1,5 +1,5 @@
 # rsplit
-## This is SUPER BAD! it's not worth your time to use, and i'm starting work on a much better timer.
+## This is SUPER BAD! it's not worth your time to use, and i'm working on [mist](https://github.com/LtPeriwinkle/mist) which is *far* better.
 (almost workable) TUI speedrun timer written in rust\
 theoretically crossplatform since it uses crossterm, however i have not tested it outside of linux\
 probably works best in something like [terminator](https://github.com/gnome-terminator/terminator) since it can show the colors correctly\
